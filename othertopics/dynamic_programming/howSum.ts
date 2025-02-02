@@ -1,6 +1,6 @@
 
 
-function howSum(targetSum: number, numbers:number[], memo: {} = {}): number[] | null{
+export function howSum(targetSum: number, numbers:number[], memo: {} = {}): number[] | null{
     // console.log(`${targetSum}`)
     if(targetSum in memo)
         return memo[targetSum]
@@ -23,7 +23,7 @@ function howSum(targetSum: number, numbers:number[], memo: {} = {}): number[] | 
     return null
 }
 
-console.log(howSum(7, [5, 3, 4, 7]))
-console.log(howSum(8, [5, 3, 2]))
-console.log(howSum(7, [4, 2]))
-console.log(howSum(300, [14, 7]))
+// console.log(howSum(7, [5, 3, 4, 7]))
+// console.log(howSum(8, [5, 3, 2]))
+// console.log(howSum(7, [4, 2]))
+// console.log(howSum(300, [14, 7]))
