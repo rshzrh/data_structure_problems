@@ -5,7 +5,7 @@
 For example, the possibilities for 'x(mn)yz' are 'xmyz', 'xnyz'.
  */
 
-onst parentheticalPossibilities = (s) => {
+const parentheticalPossibilities = (s) => {
 
     if(s === null || s.length == 0)
       return ['']
