@@ -9,7 +9,7 @@
  * @param {number[]} nums
  * @return {number[]}
  */
-var productExceptSelf = function(nums) {
+var productExceptSelfOld = function(nums) {
 
     const result = new Array(nums.length).fill(1)
 
@@ -30,6 +30,42 @@ var productExceptSelf = function(nums) {
     
     
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var productExceptSelf = function(nums) {
+
+    let left = 1
+    let right = 1
+
+    const products = new Array(nums.length).fill(1)
+
+    for(let i = 0; i < nums.length; i++){
+        products[i] *= left
+        left *= nums[i]
+    }
+
+    for(let i = nums.length - 1; i >= 0; i--){
+        products[i] *= right
+        right *= nums[i]
+    }
+    
+    return products
+
+}
+
+
 // @lc code=end
 
 

@@ -10,7 +10,12 @@
  * @param {number} k
  * @return {number[]}
  */
-var topKFrequent = function(nums, k) {
+
+
+
+
+
+var topKFrequentOld = function(nums, k) {
     const map = {}
     for(let num of nums){
 
@@ -50,10 +55,45 @@ var topKFrequent = function(nums, k) {
     
     
 };
+
+var topKFrequent = function(nums, k) {
+
+    const map = {}
+    for(let num of nums){
+        if(num in map)
+            map[num] += 1
+        else
+            map[num] = 1
+    }
+    const freqs = []
+    for(let key in map)
+        freqs.push([map[key], key])
+    
+
+    const sorted = freqs.sort((a, b) => {
+        const firstFreq = a[0]
+        const secondFreq = b[0]
+        if(firstFreq < secondFreq)
+            return 1
+        if(firstFreq > secondFreq)
+            return -1
+        return 0
+    })
+    const result = []
+    for(let i = 0; i < k; i++){
+        result.push(Number(sorted[i][1]))
+    }
+    return result
+
+}
+
 // @lc code=end
 
-const nums = [3,2,3,1,2,4,5,5,6,7,7,8,2,3,1,1,1,10,11,5,6,2,4,7,8,5,6]
 
-const k = 10
+
+
+const nums = [1]
+
+const k = 1
 console.log(topKFrequent(nums, k))
 
