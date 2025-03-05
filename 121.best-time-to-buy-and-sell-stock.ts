@@ -25,30 +25,29 @@ function maxProfitOn2(prices: number[]): number {
     
 };
 
-function maxProfit(prices: number[]): number {
-    if(prices == null || prices.length < 2)
-        return 0
 
-    let maxProfit = 0
+
+
+function maxProfit(prices: number[]): number {
+   
+    let max = 0
+
     let buy = prices[0]
     for(let i = 1; i < prices.length; i++){
-        const price = prices[i]
-        const profit = price - buy
-        if(profit > maxProfit){
-            maxProfit = profit
-        }
+        let price = prices[i]
+        let profit = price - buy
+        if(profit > max)
+            max = profit
         if(price < buy)
             buy = price
-
     }
-    
-
-    return maxProfit
+    return max
     
 };
 
-const prices = [7,1,5,3,6,4]
-const profit = maxProfit(prices)
-console.log(profit)
+
 // @lc code=end
 
+const prices = [7,6,4,3,1, 10]
+const profit = maxProfit(prices)
+console.log(profit)
