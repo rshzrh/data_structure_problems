@@ -20,14 +20,12 @@
  */
 
 function maxDepth(root: TreeNode | null): number {
+   
     if(root === null)
         return 0
-    if(root.left === null && root.right === null)
-        return 1
-    const leftDepth = maxDepth(root.left)
-    const rightDepth = maxDepth(root.right)
-    return 1 + Math.max(leftDepth, rightDepth)
-    
+    const leftHeight = maxDepth(root.left)
+    const rightHeight = maxDepth(root.right)
+    return 1 + Math.max(leftHeight, rightHeight)    
 };
 // @lc code=end
 
