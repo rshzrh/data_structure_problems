@@ -14,9 +14,11 @@ interface Fee {
 interface Receipt {
     status: string
     fee: number | null
-    entry: Date | null
-    exit: Date | null
-    spots: number[] | null
+    entry?: Date | null
+    exit?: Date | null
+    spots?: number[] | null
+    type?: string | null
+    vehicleType?: string | null
 }
 
 
@@ -38,6 +40,8 @@ class Parking {
     private totalEarning: number = 0
     private earningHistory: Receipt[] = []
     private expiredReservations: Presence[] = []
+    private subscriptionEarning: number = 0
+    private subscribers: Map<number, Receipt>
 
     constructor(capacity: number, stayMaxHours = 0.5, reservationMaxHours = 6, fees: Fee[] = [], fines: Fee[] = []) {
         this.capacity = capacity
@@ -49,6 +53,7 @@ class Parking {
         this.availableSpots = []
         this.fees = new Map<string, Fee>()
         this.fines = new Map<string, Fee>()
+        this.subscribers = new Map<number, Receipt>()
 
 
         for (let i = 0; i < this.capacity; i++) {
@@ -100,13 +105,30 @@ class Parking {
         return Math.abs(first.getTime() - second.getTime()) / 360e5
     }
 
+    subscribe(vehicleId: number, type: string): Receipt | null {
+        if(this.subscribers.has(vehicleId))
+            return this.subscribers.get(vehicleId) || null
+
+        let fee = 100.0
+        if(type === 'car')
+            fee = 200.0
+        if(type === 'truck')
+            fee = 300.0
+
+        const receipt: Receipt = {vehicleType: type, fee: fee, status: "success" }
+        this.subscribers.set(vehicleId, receipt)
+        this.subscriptionEarning += fee
+        this.totalEarning += fee
+        return receipt
+    }
+
     reserve(vehicleId: number, type: string): Presence | null {
 
         if (this.reservedSpots.has(vehicleId))
             return this.reservedSpots.get(vehicleId) || null
         if (this.spots.has(vehicleId)) //already in parking
             return null
-        const spots = this.occupySpots(type)
+        const spots = this.occupySpots(vehicleId, type)
         if (spots != null) {
             const reservation: Presence = { time: new Date(), spots: spots, type: type, vehicleId: vehicleId }
             this.reservedSpots.set(vehicleId, reservation)
@@ -117,26 +139,55 @@ class Parking {
 
     }
 
-    private occupySpots(type: string): number[] | null {
+    private occupySpots(vehicleId: number, type: string): number[] | null {
         this.removeExpiredReservations()
+
+        let result: number[] | null = null
+        let spotsNeeded = 1
         if (type === 'car' || type === 'motorcycle') {
             let spotIndex = this.availableSpots.shift()
             if (spotIndex !== undefined) {
-                return [spotIndex]
+                result = [spotIndex]
             }
         } else if (type === 'truck') {
+            spotsNeeded = 2
             for (let i = 1; i < this.availableSpots.length; i++) {
                 let current = this.availableSpots[i]
                 let prev = this.availableSpots[i - 1]
                 if (Math.abs(prev - current) === 1) { // availableSpots is always sorted
                     this.availableSpots.splice(i - 1, 2)
-                    let spot = [current, prev]
-                    return spot
+                    result = [current, prev]
                 }
 
             }
         }
-        return null
+        if(result === null && this.subscribers.has(vehicleId) && this.reservedSpots.size > 0){
+            const validCancelation = this.cancelReservation(spotsNeeded)
+            if(validCancelation)
+                result = this.occupySpots(vehicleId, type)
+        }
+        return result
+    }
+
+    private cancelReservation(totalSpots: number): boolean{
+        let totalCanceled = 0
+        const toCancelReservations: number[] = []
+        for(let vehicleId of this.reservedSpots.keys()){
+
+            const presence = this.reservedSpots.get(vehicleId)
+            toCancelReservations.push(vehicleId)
+
+            this.returnFreedSpot(presence?.spots)
+            totalCanceled += presence?.spots.length
+            if(totalCanceled >= totalSpots)
+                break
+
+        }
+        for(let vehicleId of toCancelReservations)
+            this.reservedSpots.delete(vehicleId)
+        if(totalCanceled >= totalSpots)
+            return true
+        return false
     }
     enter(vehicleId: number, type: string): Presence | null { //returns the spot index
         if (this.occupationCount() >= this.capacity)
@@ -154,7 +205,7 @@ class Parking {
             }
 
         } else {
-            spots = this.occupySpots(type)
+            spots = this.occupySpots(vehicleId, type)
         }
 
         if (spots !== null) {
@@ -169,7 +220,7 @@ class Parking {
     exit(vehicleId: number): Receipt {
         if (!this.spots.has(vehicleId)) {
             console.log("vehicle", vehicleId, " not found")
-            const receipt: Receipt = { status: "failed", fee: 0.0, entry: null, exit: null, spots: null }
+            const receipt: Receipt = { status: "failed", fee: 0.0, entry: null, exit: null, spots: null, type: null }
             return receipt
         }
 
@@ -178,33 +229,33 @@ class Parking {
 
         if (presence !== undefined) {
             const spots = presence.spots
-
+            let total = 0
             const now = new Date()
             const entry = presence.time
-            const totalHours = this.hourDifference(now, entry)
+            if(!this.subscribers.has(vehicleId)){
+                const totalHours = this.hourDifference(now, entry)
 
-            const type = presence.type
-            let hourlyFee = this.fees.get(type)
-            if (hourlyFee == undefined)
-                hourlyFee = { type: "universal", amount: 6.0 }
-
-
-            const regular = Math.min(totalHours, 6) * hourlyFee?.amount
-            const surcharge = Math.max(0, totalHours - 6) * 10
-            const total = regular + surcharge
-
-            this.totalEarning += total
-
+                const type = presence.type
+                let hourlyFee = this.fees.get(type)
+                if (hourlyFee == undefined)
+                    hourlyFee = { type: "universal", amount: 6.0 }
+    
+    
+                const regular = Math.min(totalHours, 6) * hourlyFee?.amount
+                const surcharge = Math.max(0, totalHours - 6) * 10
+                total = regular + surcharge
+    
+                this.totalEarning += total
+    
+            }
             this.returnFreedSpot(spots)
             this.spots.delete(vehicleId)
-
-
-
             const receipt: Receipt = { status: "success", fee: total, entry: entry, exit: now, spots: spots }
+            this.earningHistory.push(receipt)
             return receipt
 
         }
-        const receipt: Receipt = { status: `failed: no entry found for vehicle: ${vehicleId}`, fee: 0.0, entry: null, exit: null, spots: null }
+        const receipt: Receipt = { status: `failed: no entry found for vehicle: ${vehicleId}`, fee: 0.0, entry: null, exit: null, spots: null, type: "ondemand" }
         return receipt
 
     }
