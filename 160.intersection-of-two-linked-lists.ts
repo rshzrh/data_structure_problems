@@ -21,13 +21,13 @@
 // }
 
 
-function getIntersectionNode(headA: ListNode | null, headB: ListNode | null): ListNode | null {
+function getIntersectionNode(headA: DoubleListNode | null, headB: DoubleListNode | null): DoubleListNode | null {
 
-    let visitedNodes = new Set<ListNode>()
+    let visitedNodes = new Set<DoubleListNode>()
 
     let pointer1 = headA
     while (pointer1 != null) {
-        if(visitedNodes.has(pointer1))
+        if (visitedNodes.has(pointer1))
             continue
         visitedNodes.add(pointer1)
         pointer1 = pointer1.next
@@ -46,21 +46,21 @@ function getIntersectionNode(headA: ListNode | null, headB: ListNode | null): Li
 };
 // @lc code=end
 
-const headA = new ListNode(4)
-const a1 = new ListNode(1)
+const headA = new DoubleListNode(4)
+const a1 = new DoubleListNode(1)
 headA.next = a1
 
 
-const headB = new ListNode(5)
-const b6 = new ListNode(6)
-const b1 = new ListNode(1)
+const headB = new DoubleListNode(5)
+const b6 = new DoubleListNode(6)
+const b1 = new DoubleListNode(1)
 
 headB.next = b6
 b6.next = b1
 
-const intersection = new ListNode(8)
-const int4 = new ListNode(4)
-const int5 = new ListNode(5)
+const intersection = new DoubleListNode(8)
+const int4 = new DoubleListNode(4)
+const int5 = new DoubleListNode(5)
 intersection.next = int4
 int4.next = int5
 
